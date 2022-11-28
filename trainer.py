@@ -31,8 +31,10 @@ class Trainer(nn.Module):
         self.device = 'cpu'
         if torch.cuda.is_available():
             self.device = torch.cuda.current_device()
-            self.gen = nn.DataParallel(self.gen).to(self.device)
-            self.gen_ema = nn.DataParallel(self.gen_ema).to(self.device)
+            # self.gen = nn.DataParallel(self.gen).to(self.device)
+            # self.gen_ema = nn.DataParallel(self.gen_ema).to(self.device)
+            self.gen = self.gen.to(self.device)
+            self.gen_ema = self.gen_ema.to(self.device)
 
     def train(self, loader, wirter):
         config = self.config
@@ -159,7 +161,7 @@ class Trainer(nn.Module):
             model_dir = self.model_dir
             model_path = get_model_list(model_dir, "gen")   # last model
 
-        state_dict = torch.load(model_path, map_location=self.device)
+        state_dict = torch.load(model_path, map_location="cuda:0")
         self.gen.load_state_dict(state_dict['gen'])
         self.gen_ema.load_state_dict(state_dict['gen_ema'])
 
