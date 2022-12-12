@@ -155,11 +155,16 @@ def main():
         con_gt = cnt_data.squeeze()
         tra = out.squeeze()
 
-        sty_gt_leg = sty_gt_leg.numpy()*std + mean
-        sty_gt_spine = sty_gt_spine.numpy()*std + mean
-        sty_gt_arm = sty_gt_arm.numpy()*std + mean
-        con_gt = con_gt.numpy()*std + mean
-        tra = tra.numpy()*std + mean
+        # sty_gt_leg = sty_gt_leg.numpy()*std + mean
+        # sty_gt_spine = sty_gt_spine.numpy()*std + mean
+        # sty_gt_arm = sty_gt_arm.numpy()*std + mean
+        # con_gt = con_gt.numpy()*std + mean
+        # tra = tra.numpy()*std + mean
+        sty_gt_leg = sty_gt_leg.cpu().numpy()*std + mean
+        sty_gt_spine = sty_gt_spine.cpu().numpy()*std + mean
+        sty_gt_arm = sty_gt_arm.cpu().numpy()*std + mean
+        con_gt = con_gt.cpu().numpy()*std + mean
+        tra = tra.cpu().numpy()*std + mean
 
         tra_root = cnt_root
 
