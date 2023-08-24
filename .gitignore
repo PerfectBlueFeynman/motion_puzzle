@@ -109,14 +109,15 @@ venv.bak/
 .idea/
 
 # data
-#datasets/
+datasets/
 database/
 
 # model
-model_ours
+model_ours/
 model_ours.zip
+model_r15/
 
 # output
-#output
-#output_3bodyparts
-#output_interpolation
+output
+output_3bodyparts
+output_interpolation

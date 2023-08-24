@@ -376,35 +376,35 @@ class Decoder(nn.Module):
             sty_features: [(n, 4c, 5, t), ..., (n, c, 21, 4t)] 
         """
         # bottleneck
-        x = self.bottleneck(x, 
-                            sty_leftleg[0], sty_rightleg[0], 
-                            sty_spine[0], 
+        x = self.bottleneck(x,
+                            sty_spine[0],
                             sty_leftarm[0], sty_rightarm[0],
+                            sty_leftleg[0], sty_rightleg[0],
                             self.A_b * self.edge_importance_bt)
         
         # G3
-        x = self.bodypart(x, 
-                          sty_leftleg[1], sty_rightleg[1], 
-                          sty_spine[1], 
-                          sty_leftarm[1], sty_rightarm[1], 
+        x = self.bodypart(x,
+                          sty_spine[1],
+                          sty_leftarm[1], sty_rightarm[1],
+                          sty_leftleg[1], sty_rightleg[1],
                           self.A_b * self.edge_importance_b)
         
         # G2
         x = self.up_BodypartToMid(x)
         x = self.up_temp1(x, scale_factor=(2, 1), mode='nearest')
-        x = self.mid(x, 
-                     sty_leftleg[2], sty_rightleg[2], 
-                     sty_spine[2], 
-                     sty_leftarm[2], sty_rightarm[2], 
+        x = self.mid(x,
+                     sty_spine[2],
+                     sty_leftarm[2], sty_rightarm[2],
+                     sty_leftleg[2], sty_rightleg[2],
                      self.A_m * self.edge_importance_m)
         
         # G1
         x = self.up_MidToJoint(x)
         x = self.up_temp2(x, scale_factor=(2, 1), mode='nearest')
-        x = self.joint(x, 
-                       sty_leftleg[3], sty_rightleg[3], 
-                       sty_spine[3], 
-                       sty_leftarm[3], sty_rightarm[3], 
+        x = self.joint(x,
+                       sty_spine[3],
+                       sty_leftarm[3], sty_rightarm[3],
+                       sty_leftleg[3], sty_rightleg[3],
                        self.A_j * self.edge_importance_j)
 
         # to mot
@@ -415,7 +415,7 @@ class Decoder(nn.Module):
 
 def mixing_styles(style_cnt, style_cls, prob):
     bdy_idx = [0, 1, 2, 3, 4]
-    bdy_part_idx = [[0, 1], [2], [3, 4]]    # leg, spine, arm = [0, 1], [2], [3, 4]
+    bdy_part_idx = [[0], [1, 2], [3, 4]]    # leg, spine, arm = [0, 1], [2], [3, 4]
     
     bdy_part_select, bdy_part_not_select = [], []
     if prob > 0 and random.random() < prob:
@@ -444,15 +444,19 @@ if __name__ == '__main__':
     sys.path.append('./etc')
     from utils import get_config
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='./configs/config.yaml',
+    parser.add_argument('--config', type=str, default='./configs/config_r15.yaml',
                         help='Path to the config file.')
     args = parser.parse_args()
     config = get_config(args.config)
 
     G = Generator(config['model']['gen'])
-    xa = torch.randn(2, 12, 21, 240)
-    xb = torch.randn(2, 12, 21, 120)
+    xa = torch.randn(2, 12, 15, 240)
+    xb = torch.randn(2, 12, 15, 120)
 
     xaa, xbb, xab, xaba, xabb  = G(xa, xb)
 
+    print(xaa.shape)
+    print(xbb.shape)
     print(xab.shape)
+    print(xaba.shape)
+    print(xabb.shape)

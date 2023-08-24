@@ -68,18 +68,18 @@ class BPStyleNet(nn.Module):
                               padding,
                               padding_mode='reflect')
 
-    def forward(self, x, 
+    def forward(self, x,
+                      s_spine,
+                      s_leftarm, s_rightarm,
                       s_leftleg, s_rightleg,    # (n, c, t, 21)
-                      s_spine, 
-                      s_leftarm, s_rightarm, 
                       A):
         
-        if A.shape[-1] == 21:      # G1 level
-            idx_leftleg = [1, 2, 3, 4]
-            idx_rightleg = [5, 6, 7, 8]
-            idx_spine = [0, 9, 10, 11, 12]
-            idx_leftarm = [13, 14, 15, 16]
-            idx_rightarm = [17, 18, 19, 20]
+        if A.shape[-1] == 15:      # G1 level
+            idx_spine = [0, 1, 2]
+            idx_leftarm = [3, 4, 5]
+            idx_rightarm = [6, 7, 8]
+            idx_leftleg = [9, 10, 11]
+            idx_rightleg = [12, 13, 14]
 
         elif A.shape[-1] == 10:    # G2 level
             idx_leftleg = [0, 1]
@@ -96,7 +96,7 @@ class BPStyleNet(nn.Module):
             idx_rightarm = [4]
 
         else:
-            assert A.shape[-1] == 21 or 10 or 5, "Graph is wrong!!"
+            assert A.shape[-1] == 15 or 10 or 5, "Graph is wrong!!"
 
         x_leftleg = x[..., idx_leftleg]
         s_leftleg = s_leftleg[..., idx_leftleg]
@@ -116,7 +116,7 @@ class BPStyleNet(nn.Module):
         x_leftarm = self.adain_leftarm(x_leftarm, s_leftarm)
         x_rightarm = self.adain_rightarm(x_rightarm, s_rightarm)
 
-        x = torch.cat((x_leftleg, x_rightleg, x_spine, x_leftarm, x_rightarm), -1)
+        x = torch.cat((x_spine, x_leftarm, x_rightarm, x_leftleg, x_rightleg), -1)
         if A.shape[-1] == 21:
             x = torch.cat((x[..., 8:9], x[..., 0:8], x[..., 9:]), -1)
 
@@ -139,7 +139,7 @@ class BPStyleNet(nn.Module):
         x_leftarm = self.astyle_leftarm(x_leftarm, s_leftarm)
         x_rightarm = self.astyle_rightarm(x_rightarm, s_rightarm)
 
-        x = torch.cat((x_leftleg, x_rightleg, x_spine, x_leftarm, x_rightarm), -1)
+        x = torch.cat((x_spine, x_leftarm, x_rightarm, x_leftleg, x_rightleg), -1)
         if x.shape[-1] == 21:
             x = torch.cat((x[..., 8:9], x[..., 0:8], x[..., 9:]), -1)
 
@@ -172,14 +172,14 @@ class ResBPStyleNet(nn.Module):     # not down or up sampling
                                       kernel_size=1,
                                       stride=(stride, 1))
                 
-    def forward(self, x, 
-                      s_leftleg, s_rightleg, 
-                      s_spine, 
-                      s_leftarm, s_rightarm, 
+    def forward(self, x,
+                      s_spine,
+                      s_leftarm, s_rightarm,
+                      s_leftleg, s_rightleg,
                       A):
         x_org = self.shortcut(x)
         for i, layer in enumerate(self.res):
-            x = layer(x, s_leftleg, s_rightleg, s_spine, s_leftarm, s_rightarm, A)
+            x = layer(x, s_spine, s_leftarm, s_rightarm, s_leftleg, s_rightleg, A)
         out = x_org + 0.1 * x
         return out
 
