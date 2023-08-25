@@ -11,7 +11,7 @@ def set_seed(seed):
     torch.cuda.manual_seed_all(seed)
 
 def get_config(config):
-    with open(config, 'r') as stream:
+    with open(config, 'r', encoding="utf8") as stream:
         return yaml.load(stream, Loader=yaml.FullLoader)
 
 def ensure_dir(path):

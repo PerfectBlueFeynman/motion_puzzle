@@ -3,15 +3,9 @@ import sys
 sys.path.append('../motion')
 from Quaternions import Quaternions
 
-chosen_joints = np.array([
-    0,
-    2,  3,  4,  5,
-    7,  8,  9, 10,
-    12, 13, 15, 16,
-    18, 19, 20, 22,
-    25, 26, 27, 29])
+chosen_joints = np.array([1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15])
 
-parents = np.array([-1, 0, 1, 2, 3, 0, 5, 6, 7, 0, 9, 10, 11, 10, 13, 14, 15, 10, 17, 18, 19])
+parents = np.array([-1, 0,  1,  1,  3,  4,  1,  6,  7,  0,  9, 10,  0, 12, 13])
 
 def normalized(v):
     norm = np.sum(v**2.0, axis=-1)**0.5

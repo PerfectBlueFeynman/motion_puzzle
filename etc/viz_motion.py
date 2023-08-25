@@ -1,16 +1,18 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
+rcParams['animation.ffmpeg_path'] = r'C:\Program Files\ffmpeg\bin\ffmpeg.exe'
 import matplotlib.animation as animation
 import matplotlib.colors as colors
 import matplotlib.patheffects as pe
 sys.path.append('../motion')
 from Quaternions import Quaternions
 
-parents = np.array([-1,0,1,2,3,0,5,6,7,0,9,10,11,11,13,14,15,11,17,18,19])
-joint_foot_indicies = [3, 4, 7, 8]
+parents = np.array([-1, 0,  1,  1,  3,  4,  1,  6,  7,  0,  9, 10,  0, 12, 13])
+joint_foot_indicies = [11, 14]
 
-def animation_plot(animations, interval=33.33):
+def animation_plot(animations, interval=16.67, save_gif=False, **kwargs):
     foot_contacts = [None] * len(animations)
     for ai in range(len(animations)):
         anim = animations[ai].copy()
@@ -42,7 +44,7 @@ def animation_plot(animations, interval=33.33):
     
     fig = plt.figure(figsize=(12,8))
     ax = fig.add_subplot(111, projection='3d')
-    rscale = scale * 30
+    rscale = scale * 10
     ax.set_xlim3d(-rscale, rscale)
     ax.set_zlim3d(0, rscale*2)
     ax.set_ylim3d(-rscale, rscale)
@@ -63,12 +65,12 @@ def animation_plot(animations, interval=33.33):
                     linewidth=2, linestyle='',
                     marker="o", markersize=2 * scale,
                     path_effects=[pe.Stroke(linewidth=2, foreground='black'), pe.Normal()]
-                    )[0] for _ in range(contact.shape[1])])
+                    )[0] for _ in range(contact)])
     
     def animate(i):
         changed = []
         for ai in range(len(animations)):
-            offset = 25*(ai-((len(animations))/2))
+            offset = 10*(ai-((len(animations))/2))
             for j in range(len(parents)):
                 if parents[j] != -1:
                     lines[ai][j].set_data(
@@ -78,12 +80,12 @@ def animation_plot(animations, interval=33.33):
                         [ animations[ai][i,j,1],        animations[ai][i,parents[j],1]])
             changed += lines
         
-        # foot contact
-            for j, f_idx in enumerate(joint_foot_indicies):
-                contact_dots[ai][j].set_data([animations[ai][i,f_idx,0]+offset], [-animations[ai][i,f_idx,2]])      # left toe
-                contact_dots[ai][j].set_3d_properties([animations[ai][i,f_idx,1]])
-                color = 'red' if foot_contacts[ai][i, j] == 1.0 else 'blue'
-                contact_dots[ai][j].set_color(color)
+        # # foot contact
+        #     for j, f_idx in enumerate(joint_foot_indicies):
+        #         contact_dots[ai][j].set_data([animations[ai][i,f_idx,0]+offset], [-animations[ai][i,f_idx,1]])      # left toe
+        #         contact_dots[ai][j].set_3d_properties([animations[ai][i,f_idx,1]])
+        #         color = 'red' if foot_contacts[ai][i, j] == 1.0 else 'blue'
+        #         contact_dots[ai][j].set_color(color)
             
         return changed
         
@@ -91,7 +93,9 @@ def animation_plot(animations, interval=33.33):
         
     ani = animation.FuncAnimation(fig, 
         animate, np.arange(len(animations[0])), interval=interval)
-        
+    if save_gif:
+        ani.save(kwargs["path"], fps=60, dpi=300)
+        return
     plt.show()
 
 
@@ -100,7 +104,7 @@ if __name__ == '__main__':
     dataset = np.load(data_path, allow_pickle=True)
     motions, roots, foot_contacts = dataset["motion"], dataset["root"], dataset["foot_contact"]
 
-    for i in range(len(motions)):
-        motion1 = [motions[i], roots[i], foot_contacts[i]]
-        motion2 = [motions[i+1], roots[i+1], foot_contacts[i+1]]
+    for i in range(0, len(motions), 2):
+        motion1 = [motions[i], roots[i], foot_contacts[i].shape[1]]
+        motion2 = [motions[i+1], roots[i+1], foot_contacts[i+1].shape[1]]
         animation_plot([motion1, motion2])
