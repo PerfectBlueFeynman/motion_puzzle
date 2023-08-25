@@ -221,15 +221,27 @@ class Quaternions:
         q2 = q[...,2]
         q3 = q[...,3]
         es = np.zeros(self.shape + (3,))
-        
-        if   order == 'xyz':
-            es[...,0] = np.arctan2(2 * (q0 * q1 + q2 * q3), 1 - 2 * (q1 * q1 + q2 * q2))
-            es[...,1] = np.arcsin((2 * (q0 * q2 - q3 * q1)).clip(-1,1))
-            es[...,2] = np.arctan2(2 * (q0 * q3 + q1 * q2), 1 - 2 * (q2 * q2 + q3 * q3))
+
+        if order == 'xyz':
+            es[..., 0] = np.arctan2(2 * (q0 * q1 + q2 * q3), 1 - 2 * (q1 * q1 + q2 * q2))
+            es[..., 1] = np.arcsin((2 * (q0 * q2 - q3 * q1)).clip(-1, 1))
+            es[..., 2] = np.arctan2(2 * (q0 * q3 + q1 * q2), 1 - 2 * (q2 * q2 + q3 * q3))
         elif order == 'yzx':
-            es[...,0] = np.arctan2(2 * (q1 * q0 - q2 * q3), -q1 * q1 + q2 * q2 - q3 * q3 + q0 * q0)
-            es[...,1] = np.arctan2(2 * (q2 * q0 - q1 * q3),  q1 * q1 - q2 * q2 - q3 * q3 + q0 * q0)
-            es[...,2] = np.arcsin((2 * (q1 * q2 + q3 * q0)).clip(-1,1))
+            es[..., 0] = np.arctan2(2 * (q1 * q0 - q2 * q3), -q1 * q1 + q2 * q2 - q3 * q3 + q0 * q0)
+            es[..., 1] = np.arctan2(2 * (q2 * q0 - q1 * q3), q1 * q1 - q2 * q2 - q3 * q3 + q0 * q0)
+            es[..., 2] = np.arcsin((2 * (q1 * q2 + q3 * q0)).clip(-1, 1))
+        elif order == 'zyx':
+            es[..., 0] = np.arctan2(2 * (q0 * q3 + q1 * q2), 1 - 2 * (q2 * q2 + q3 * q3))
+            es[..., 1] = np.arcsin((2 * (q0 * q2 - q1 * q3)).clip(-1, 1))
+            es[..., 2] = np.arctan2(2 * (q0 * q1 + q2 * q3), 1 - 2 * (q1 * q1 + q2 * q2))
+        elif order == 'zxy':
+            es[..., 0] = np.arcsin((2 * (q0 * q1 + q2 * q3)).clip(-1, 1))
+            es[..., 1] = np.arctan2(2 * (q0 * q2 - q1 * q3), 1 - 2 * (q1 * q1 + q2 * q2))
+            es[..., 2] = np.arctan2(2 * (q0 * q3 - q1 * q2), 1 - 2 * (q1 * q1 + q3 * q3))
+        # elif order == 'yxz':
+        #     es[..., 0] = np.arcsin((2 * (q0 * q3 + q1 * q2)).clip(-1, 1))  # Pitch
+        #     es[..., 1] = np.arctan2(2 * (q1 * q3 + q0 * q2), 1 - 2*(q1 * q1 + q2 * q2))  # Roll
+        #     es[..., 2] = np.arctan2(2 * (q1 * q2 + q0 * q3), 1 - 2*(q1 * q1 + q3 * q3))  # Yaw
         else:
             raise NotImplementedError('Cannot convert from ordering %s' % order)
         

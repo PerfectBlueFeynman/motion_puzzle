@@ -6,6 +6,7 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 sys.path.append('./etc')
 from utils import get_model_list
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class Trainer(nn.Module):
 
         lr_gen = config['lr_gen']
         gen_params = list(self.gen.parameters())
-        self.gen_opt = RAdam([p for p in gen_params if p.requires_grad],
+        self.gen_opt = optim.RAdam([p for p in gen_params if p.requires_grad],
                               lr=lr_gen, weight_decay=config['weight_decay'])
 
         self.device = 'cpu'
@@ -49,6 +50,14 @@ class Trainer(nn.Module):
                 gen_loss_total, gen_loss_dict = self.compute_gen_loss(con_data, sty_data)
                 self.gen_opt.zero_grad()
                 gen_loss_total.backward()
+                # params = {}
+                # grads = {}
+                # for name, param in self.gen.named_parameters():
+                #     if torch.isnan(param.grad).any():
+                #         for name, param in self.gen.named_parameters():
+                #             print("Gradients: ==================")
+                #             print(name, param.grad, param)
+                #         exit()
                 torch.nn.utils.clip_grad_norm_(self.gen.parameters(), 1.0)
                 self.gen_opt.step()
                 update_average(self.gen_ema, self.gen)
@@ -66,6 +75,7 @@ class Trainer(nn.Module):
                 if (it+1) % config['log_every'] == 0:
                     for k, v in gen_loss_dict.items():
                         wirter.add_scalar(k, v, epoch*len(loader['train_src'])+it)
+                        # print(epoch * len(loader['train_src']) + it, k, v)
                         
         for epoch in range(config['max_epochs']):
             run_epoch(epoch)

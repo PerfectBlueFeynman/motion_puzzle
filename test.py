@@ -14,20 +14,23 @@ from remove_fs import remove_foot_sliding
 from utils import ensure_dirs, get_config
 from generate_dataset import process_data
 from output2bvh import compute_posture
+from viz_motion import animation_plot
+
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-chosen_joints = np.array([
-    0,
-    2,  3,  4,  5,
-    7,  8,  9, 10,
-    12, 13, 15, 16,
-    18, 19, 20, 22,
-    25, 26, 27, 29])
+# chosen_joints = np.array([
+#     0,
+#     2,  3,  4,  5,
+#     7,  8,  9, 10,
+#     12, 13, 15, 16,
+#     18, 19, 20, 22,
+#     25, 26, 27, 29])
 
-parents = np.array([-1, 0, 1, 2, 3, 0, 5, 6, 7, 0, 9, 10, 11, 10, 13, 14, 15, 10, 17, 18, 19])
-
+# chosen_joints = np.array([3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17])
+# parents = np.array([-1, 0, 1, 2, 3, 0, 5, 6, 7, 0, 9, 10, 11, 10, 13, 14, 15, 10, 17, 18, 19])
+# parents = np.array([-1, 0,  1,  1,  3,  4,  1,  6,  7,  0,  9, 10,  0, 12, 13])
 def initialize_path(config):
     config['main_dir'] = os.path.join('.', config['name'])
     config['model_dir'] = os.path.join(config['main_dir'], "pth")
@@ -41,23 +44,34 @@ def main():
                         help='Path to the config file.')
     parser.add_argument('--content', 
                         type=str, 
-                        default='./datasets/cmu/test_bvh/127_21.bvh',
+                        default='./datasets/xia_test/r15/old/angry_13_000.bvh',
                         help='Path to the content bvh file.')
     parser.add_argument('--style', 
                         type=str, 
-                        default='./datasets/cmu/test_bvh/142_21.bvh',
+                        default='./datasets/xia_test/r15/old/neutral_01_000.bvh',
                         help='Path to the style bvh file.')
-    parser.add_argument('--output_dir', 
+    parser.add_argument('--skeleton_config',
+                        type=str,
+                        default='./configs/skeleton_cmu_r15.yaml',
+                        help='Path to the style bvh file.')
+    parser.add_argument('--output_dir',
                         type=str, 
                         default='./output')
     parser.add_argument('--remove_fs',
                         type=bool, 
                         default=True)
+    parser.add_argument('--save_gif',
+                        type=bool,
+                        default=False)
     args = parser.parse_args()
 
     # initialize path
     cfg = get_config(args.config)
     initialize_path(cfg)
+
+    skel_cfg = get_config(args.skeleton_config)
+    chosen_joints = skel_cfg['chosen_joints']
+    parents = skel_cfg['chosen_parents']
 
     # make output path folder
     output_dir = args.output_dir
@@ -69,6 +83,8 @@ def main():
 
     # w/w.o post-processing
     remove_fs = args.remove_fs
+
+    save_gif = args.save_gif
 
     content_name = os.path.split(content_bvh_file)[-1].split('.')[0]
     style_name = os.path.split(style_bvh_file)[-1].split('.')[0]
@@ -86,16 +102,26 @@ def main():
 
     # import motion(bvh) and pre-processing
     cnt_mot, cnt_root, cnt_fc = \
-        process_data(content_bvh_file, divide=False)
+        process_data(content_bvh_file, window=120, window_step=60, config=skel_cfg, divide=False)
     cnt_mot, cnt_root, cnt_fc = cnt_mot[0], cnt_root[0], cnt_fc[0]
     
     sty_mot, sty_root, sty_fc = \
-        process_data(style_bvh_file, divide=False)
+        process_data(style_bvh_file, window=120, window_step=60, config=skel_cfg, divide=False)
     sty_mot, sty_root, sty_fc = sty_mot[0], sty_root[0], sty_fc[0]
 
     # normalization
+    # print(cnt_mot.shape)
+    # for j in range(15):
+    #     # print(cnt_mot[0, j, 3:6])
+    #     # print(cnt_mot[0, j, 6:9])
+    #     # print(np.cross(cnt_mot[0, j, 3:6], cnt_mot[0, j, 6:9]))
+    #     print(cnt_mot[0, j, :3])
+    #     print('---')
+    # exit()
     cnt_motion_raw = np.transpose(cnt_mot, (2, 1, 0))
     sty_motion_raw = np.transpose(sty_mot, (2, 1, 0))
+
+
     cnt_motion = (cnt_motion_raw - mean) / std
     sty_motion = (sty_motion_raw - mean) / std
     
@@ -136,6 +162,14 @@ def main():
 
         tra_root = cnt_root
 
+        if save_gif:
+            print()
+            animation_plot([
+                [np.transpose(sty_gt, (2, 1, 0)), sty_root, 2],
+                [np.transpose(con_gt, (2, 1, 0)), cnt_root, 2],
+                [np.transpose(tra, (2, 1, 0)), tra_root, 2],
+            ], save_gif=True, path=os.path.join(output_dir, trans_name+'.gif'))
+            return
         con_gt_mot, rec_mot = [compute_posture(raw, cnt_root) for raw in [con_gt, rec]]
         tra_mot = compute_posture(tra, tra_root)
         sty_gt_mot = compute_posture(sty_gt, sty_root)
@@ -143,6 +177,7 @@ def main():
         fnames = [style_name, content_name, recon_name, trans_name]
         for mot, fname in zip(mots, fnames):
             local_joint_xforms = mot['local_joint_xforms']
+            print(fname, local_joint_xforms.shape)
 
             s = local_joint_xforms.shape[:2]
             rotations = Quaternions.id(s)
@@ -157,12 +192,12 @@ def main():
                                         orients, offsets, parents)
 
             file_path = os.path.join(output_dir, fname + ".bvh")
-            BVH.save(file_path, anim, names, frametime=1.0/60.0)
+            BVH.save(file_path, anim, names, frametime=1.0/60.0, order='zxy')
             if remove_fs and 'Style_' in fname:
                 glb = Animation.positions_global(anim)
                 anim = remove_foot_sliding(anim, glb, cnt_fc)
                 file_path = os.path.join(output_dir, fname + "_fixed.bvh")
-                BVH.save(file_path, anim, names, frametime=1.0/60.0)
+                BVH.save(file_path, anim, names, frametime=1.0/60.0, order='zxy')
 
         for key in loss_test_dict.keys():
             loss = loss_test_dict[key]

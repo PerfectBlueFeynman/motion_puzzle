@@ -275,7 +275,7 @@ class JacobianInverseKinematics:
             gp = gp[:,:,:3] / gp[:,:,3,np.newaxis]
             gr = Quaternions.from_transforms(gt)
             
-            x = self.animation.rotations.euler().reshape(nf, -1)
+            x = self.animation.rotations.euler(order='zxy').reshape(nf, -1)
             w = self.weights.repeat(3)
             
             if self.translate:
@@ -310,7 +310,7 @@ class JacobianInverseKinematics:
 
             """ Set Back Rotations / Translations """
             self.animation.rotations = Quaternions.from_euler(
-                x[:,:nj*3].reshape((nf, nj, 3)), order='xyz', world=True)
+                x[:,:nj*3].reshape((nf, nj, 3)), order='zxy', world=True)
                 
             if self.translate:
                 self.animation.positions = x[:,nj*3:].reshape((nf,nj, 3))
@@ -448,7 +448,7 @@ class ICP:
             gp = gp[:,:,:3] / gp[:,:,3,np.newaxis]
             gr = Quaternions.from_transforms(gt)
             
-            x = self.animation.rotations.euler().reshape(nf, -1)
+            x = self.animation.rotations.euler(order='zxy').reshape(nf, -1)
             w = self.weights.repeat(3)
             
             if self.translate:
@@ -483,7 +483,7 @@ class ICP:
             
             """ Set Back Rotations / Translations """
             self.animation.rotations = Quaternions.from_euler(
-                x[:,:nj*3].reshape((nf, nj, 3)), order='xyz', world=True)
+                x[:,:nj*3].reshape((nf, nj, 3)), order='zxy', world=True)
                 
             if self.translate:
                 self.animation.positions = x[:,nj*3:].reshape((nf, nj, 3))

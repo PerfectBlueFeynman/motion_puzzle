@@ -7,7 +7,7 @@ from Quaternions import Quaternions
 channelmap = {
     'Xrotation' : 'x',
     'Yrotation' : 'y',
-    'Zrotation' : 'z'   
+    'Zrotation' : 'z'
 }
 
 channelmap_inv = {
@@ -165,9 +165,13 @@ def load(filename, start=None, end=None, order=None, world=False, captured=False
     f.close()
     
     rotations = Quaternions.from_euler(np.radians(rotations), order=order, world=world)
-    
+    # print('[')
+    # for i in range(len(names)):
+    #     print(f'[{offsets[i][0]:.5f}, {offsets[i][1]:.5f}, {offsets[i][2]:.5f}],  # {names[i]}: {i}')
+    # print(']')
+
     return (Animation(rotations, positions, orients, offsets, parents), names, frametime)
-    
+
 
     
 def save(filename, anim, names=None, frametime=1.0/24.0, order='zyx', positions=False, orients=True):
@@ -234,7 +238,7 @@ def save(filename, anim, names=None, frametime=1.0/24.0, order='zyx', positions=
         #    rots = np.degrees((-anim.orients[np.newaxis] * anim.rotations).euler(order=order[::-1]))
         #else:
         #    rots = np.degrees(anim.rotations.euler(order=order[::-1]))
-        rots = np.degrees(anim.rotations.euler(order=order[::-1]))
+        rots = np.degrees(anim.rotations.euler(order=order))
         poss = anim.positions
         
         for i in range(anim.shape[0]):

@@ -33,22 +33,23 @@ def get_files(directory):
 def main():
     bvh_dir = '../database/cmu'
     bvh_files = get_files(bvh_dir)
+    # bvh_files = ['../database/cmu/2.bvh']
 
     for i, item in enumerate(bvh_files):
         print('Processing %i of %i (%s)' % (i+1, len(bvh_files), item))
-        filename = item.split('/')[-1]
+        filename = os.path.split(item)[-1]
         filename = filename.split('.')[0]
-        mirrored_filename = filename +'m.bvh'
+        mirrored_filename = filename +'_m.bvh'
         
-        anim, _, _ = BVH.load(item)
+        anim, _, frametime = BVH.load(item)
         rotations = anim.rotations.qs
         positions = anim.positions
-        trajectories = positions[:, 0].copy()
+        trajectories = positions[:, 1].copy()
         orients   = anim.orients
         offsets   = anim.offsets
         parents   = anim.parents
-        joints_left = np.array([1, 2, 3, 4, 5, 17, 18, 19, 20, 21, 22, 23], dtype='int64') 
-        joints_right = np.array([6, 7, 8, 9, 10, 24, 25, 26, 27, 28, 29, 30], dtype='int64')
+        joints_left = np.array( [4, 5, 6, 10, 11, 12], dtype='int64')
+        joints_right = np.array([7, 8, 9, 13, 14, 15], dtype='int64')
 
         mirrored_rotations = rotations.copy()
         mirrored_positions = positions.copy()
@@ -61,7 +62,7 @@ def main():
         mirrored_rotations[:, :, [2, 3]] *= -1
         mirrored_rotations = Quaternions(qfix(mirrored_rotations))
         mirrored_trajectory[:, 0] *= -1
-        mirrored_positions[:, 0] = mirrored_trajectory
+        mirrored_positions[:, 1] = mirrored_trajectory
 
         mirrored_anim = Animation(mirrored_rotations, mirrored_positions, orients, offsets, parents)
         
@@ -70,7 +71,7 @@ def main():
             print("Create folder ", file_dir)
             os.makedirs(file_dir)
         mirrored_file_path = os.path.join(file_dir, mirrored_filename)
-        BVH.save(mirrored_file_path, mirrored_anim)
+        BVH.save(mirrored_file_path, mirrored_anim, frametime=frametime, order='zxy')
 
 if __name__ == '__main__':
     main()

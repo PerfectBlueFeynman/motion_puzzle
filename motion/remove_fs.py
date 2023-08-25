@@ -20,18 +20,21 @@ def lerp(a, l, r):
     return (1 - a) * l + a * r
 
 
-def remove_foot_sliding(anim, glb, foot, fid_l=(3, 4), fid_r=(7, 8), interp_length=10, force_on_floor=True):
+def remove_foot_sliding(anim, glb, foot, fid_l=(11,), fid_r=(14,), interp_length=10, force_on_floor=True):
     T = len(glb)
     fid = list(fid_l) + list(fid_r)
     fid_l, fid_r = np.array(fid_l), np.array(fid_r)
+    print(fid_l, fid_r, fid)
 
-    foot_heights = np.minimum(glb[:, fid_l, 1],
-                              glb[:, fid_r, 1]).min(axis=1)  # [T, 2] -> [T]
-    # print(np.min(foot_heights))
+    foot_heights = np.minimum(glb[:, fid_l, 0],
+                              glb[:, fid_r, 0]).min(axis=1)  # [T, 2] -> [T]
+
+    print(np.min(foot_heights))
     floor_height = softmin(foot_heights, softness=0.5, axis=0)
-    # print(floor_height)
+    print(floor_height)
     glb[:, :, 1] -= floor_height
     anim.positions[:, 0, 1] -= floor_height
+    # exit()
 
     for i, fidx in enumerate(fid):
         fixed = foot[i]  # [T]
